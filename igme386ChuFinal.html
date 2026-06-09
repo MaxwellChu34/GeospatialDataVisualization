@@ -1,0 +1,166 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>IGME 386 Final Project</title>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        flex: 1 1 auto;
+        order: 1;
+      }
+      #titleDiv {
+        padding: 0px 15px;
+      }
+      #sliderContainer {
+        padding: 0 10px;
+        order: 2;
+        display: flex;
+        flex: 0 0 80px;
+        flex-flow: row;
+      }
+      #sliderDiv {
+        padding: 0 20px;
+        order: 1;
+        display: flex;
+        justify-content: center;
+      }
+      #sliderValue,
+      #startYearDiv,
+      #endYearDiv {
+        display: flex;
+        flex: 1 1 auto;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+      }
+      #sliderValue {
+        order: 3;
+        font-size: 300%;
+        padding-left: 15px;
+      }
+      #startYearDiv {
+        order: 1;
+      }
+      #endYearDiv {
+        order: 2;
+      }
+    </style>
+  
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.28/"></script>
+
+    <script>
+      //gathers the MapView and select widgets
+      require(["esri/config", 
+                "esri/Map", 
+                "esri/views/MapView",
+                "esri/layers/FeatureLayer",
+                "esri/widgets/Slider",
+                "esri/widgets/Home",
+                "esri/widgets/Legend"
+          ], function(esriConfig, Map, MapView, FeatureLayer, Slider, Home, Legend) {
+        
+        //API Key used to display a map online
+        esriConfig.apiKey = import.meta.env.key;
+
+        //The base map's aethestic is selected as a simple and clean light-gray look
+        //https://developers.arcgis.com/javascript/latest/
+        const map = new Map({
+          basemap: "arcgis/light-gray"
+        });
+
+        //The starting view of the map by using starting coordinates and zoom level
+        const view = new MapView({
+          map: map,
+          center: [25,47],
+          zoom: 2.5,
+          container: "viewDiv",
+          constraints: {
+            snapToZoom: false,
+            minScale: 75000000
+          }
+        });
+
+        //Home Widget is placed on top left of screen
+        //https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-Home.html
+        view.ui.add(
+          new Home({
+            view: view
+          }),
+          "top-left"
+        )
+
+        //Legend Widget is placed on bottom left of screen
+        //https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-Legend.html
+        view.ui.add(
+          new Legend({
+            view: view
+          }),
+          "bottom-left"
+        )
+
+        //Self-made feature layer that displays European Population Density over Time with 2023 at the start
+        //URL: https://services2.arcgis.com/RQcpPaCpMAXzUI5g/arcgis/rest/services/European_Population_Density_over_Time/FeatureServer/0
+        //https://developers.arcgis.com/javascript/latest/tutorials/add-a-feature-layer/
+        var popDenLayer = new FeatureLayer({
+            url: "https://services2.arcgis.com/RQcpPaCpMAXzUI5g/arcgis/rest/services/European_Population_Density_over_Time/FeatureServer/0",
+            definitionExpression: "year = 2023",
+            title: "Population Density"
+        });
+
+        //Adds feature layer to map
+        map.add(popDenLayer);
+
+        //Adds slider with min value of 2003 and max/starting value of 2023
+        //https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-Slider.html
+        var slider = new Slider({
+          container: "sliderDiv",
+          min: 2003,
+          max: 2023,
+          values: [2023],
+          step: 1,
+          rangeLabelsVisible: true
+        });
+
+        //Gets the slider value (number to right of slider)
+        let sliderVal = document.getElementById("sliderValue");
+        //Checks if the slider knob has been changed
+        slider.on("thumb-drag", inputHandler);
+
+        //If there is a change, the slider value changes to current value
+        //The current layer shown on the map matches to that of the selected year
+        //Source reference: visualization-vv-color-animate.html from week_12a_datasets
+        function inputHandler(event) {
+          sliderVal.innerHTML = Math.floor(event.value);
+          popDenLayer.definitionExpression = "year = " + Math.floor(event.value);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <p id="titleDiv">European Population Density over Time by Maxwell Chu</p>
+    <div id="sliderContainer">
+        <p id="startYearDiv">2003</p>
+        <div id="sliderDiv"></div>
+        <p id="endYearDiv">2023</p>
+        <div id="sliderValue">2023</div>
+    </div>
+  </body>
+</html>
